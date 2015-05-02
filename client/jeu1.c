@@ -19,16 +19,13 @@ void wait_for_quit(const struct board_t *board) {
 void countdown(const struct board_t *board) {
     int i = 0;
     char line[] = "                                                                                ";
-
     while (!(bd_read_button_state(board) & 0x02))
         ;
-
     for(; i <= 5; i++) {
         line[44 + 8]  = '0' + 5 - i;
         bd_send_line(board, 13, line);
         usleep(1000000);
     }
-    
     bd_send_line(board, 14, "                                         Décompte fini !                                  ");  
 }
 
@@ -97,7 +94,6 @@ void init_deck(struct deck *my_deck) {
         fseek(q_file, 0, SEEK_SET); // on se replace au début du fichier
 
         /* création et mise en mémoire du fichier de questions */
-
         my_deck->questions = malloc(sizeof(char*) * my_deck->nb_lignes);
 
         int i = 0;
@@ -111,7 +107,6 @@ void init_deck(struct deck *my_deck) {
 
                 /* concaténer ensemble les lignes de ? suivantes */
                 while(fgets(buffer, MAX_QUESTION_LEN, q_file) != NULL && buffer[0] == '?') {
-
                     buffer[0] = ' '; // on efface les ? qui suivent (laissant que le premier)
                     strcat(big_buffer, buffer); 
                 } 
@@ -139,11 +134,7 @@ void print_screen(const struct board_t *board, char **text) {
     }
 }
 
-void print_(struct double_char str) {
-    for(int i = 0; i < str.n_i; i++)
-        printf("%s", str.s[i]);
 
-}
 void print_question(const struct board_t *board, struct deck m_deck, int flag) {
 
     /* pour afficher les réponses :

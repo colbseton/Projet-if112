@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     struct deck my_deck;
 
-    srand(time(NULL));  //Pénérateur de nombres aléatoires
+    srand(time(NULL));  //Générateur de nombres aléatoires
 
     bd_send_button_states(&board, 0xff); // Allume tous les boutons
     clear_screen(&board);
