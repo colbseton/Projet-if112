@@ -1,0 +1,18 @@
+# Remplacez main par le nom de votre projet
+EXEC=Jeu
+BOARD_PATH=../board
+CFLAGS= -std=c99 -O3 -g -Wall -Werror -I../board
+LDLIBS=-L$(BOARD_PATH) -lbd
+CPPFLAGS=-D_XOPEN_SOURCE=500
+# Completez par la liste de vos fichier objets (.o)
+OBJS= mainjeu.o jeu1.o
+
+all: $(EXEC)
+$(EXEC): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+lib: $(BOARD_PATH)/libbd.a
+clean:
+	$(RM) $(EXEC) *.o
+$(BOARD_PATH)/libbd.a:
+	make -sC $(BOARD_PATH) libbd.a
+.PHONY: all clean lib
