@@ -4,14 +4,14 @@
 #define MAX_QUESTION_LEN 5000
 
 struct deck {
-	int nb_qst;
-	int nb_lignes;
-	char **questions;
+    int nb_qst;
+    int nb_lignes;
+    char **questions;
 };
 
 struct double_char {
-	char **s;
-	int n_i; // nombre de lignes du double tableau
+    char **s;
+    int n_i; // nombre de lignes du double tableau
 };
 
 void __free(struct double_char *d_str); // size est le nombre de lignes
@@ -32,20 +32,3 @@ void init_deck(struct deck *my_deck);
    tableau de chaîne */
 
 #endif
-
-
-/*
-void str_form(char *str) { 
-	char str2[MAX_QUESTION_LEN] = ""; strcpy(str2, str);
-	int i = 0, j = 0;
-	for(; (str2[j] != '\0'); i++, j++) {
-		if((j % SCREEN_COLUMNS == 0) && (j != 0)) {
-			str[i] = '\n';
-            str[++i] = str2[j];
-		} 
-		else {
-			str[i] = str2[j];
-		}
-	}
-}
-*/
