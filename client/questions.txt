@@ -1,28 +1,28 @@
-?Quelle est la capitale de la France 
+?Quelle est la capitale de la France
 Bruxelles
 Rome
 Tokyo
 *Paris
 
-?En quelle année a eu lieu la révolution française
+?En quelle annee a eu lieu la revolution francaise
 1939
 *1789
 1993
 Elle n'a pas eu lieu
 
-?Où se trouve le Puy du Fou
-*Vendée
+?Ou se trouve le Puy du Fou 
+*Vendee
 Bretagne
 Cochinchine
 Aquitaine
 
-?Dans la mythologie Grecque, quele déesse ne s'est pas disputée la pomme d'or du jardin des Hespérides
-Athéna
-Héra
-*Artémis
+?Dans la mythologie Grecque, quelle deesse ne s'est pas disputee la pomme d'or du jardin des Hesperides
+Athena
+Hera
+*Artemis
 Aphrodite
 
-?La Silicon Valley est connue pour…
+?Pourquoi est connue la Silicon Valley
 *Ses start-up hightech
 Ses vins
 L'architecture de ses maisons

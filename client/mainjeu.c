@@ -34,13 +34,10 @@ int main(int argc, char *argv[]) {
     
     init_deck(&my_deck);
     while(1){
-        print_question(&board, my_deck, 1);
+        print_question(&board, my_deck, 2);
         usleep(2000000);
         clear_screen(&board);
     }
-
-    wait_for_quit(&board);
-
 
     return EXIT_SUCCESS;
 }

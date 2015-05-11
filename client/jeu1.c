@@ -7,39 +7,16 @@
 #include <board_client.h> // Pour les fonctions du simulateur
 #include "jeu1.h"
 
-void wait_for_quit(const struct board_t *board) {
-    while(1) { // appuyer sur q ou shift Q pour quitter le programme
-        int k = bd_read_key(board);
-        if(k == 'q' || k == 'Q')
-            bd_disconnect(board);
-        } 
-}
-
-
-void countdown(const struct board_t *board) {
-    int i = 0;
-    char line[] = "                                                                                ";
-    while (!(bd_read_button_state(board) & 0x02))
-        ;
-    for(; i <= 5; i++) {
-        line[44 + 8]  = '0' + 5 - i;
-        bd_send_line(board, 13, line);
-        usleep(1000000);
-    }
-    bd_send_line(board, 14, "                                         Décompte fini !                                  ");  
-}
-
-
 static void str_form(char *str, struct double_char *str_formed) {
     /* une question est un tableau de chaîne, chaque ligne est découpée 
        de façon à ne pas dépasser la longueur de l'écran */
     int i = 0, j = 0, len_str = strlen(str);
     
     str_formed->n_i = 1+len_str/SCREEN_COLUMNS;
-    str_formed->s = malloc(sizeof(char*) * SCREEN_LINES);
+    str_formed->s = calloc(SCREEN_LINES, sizeof(char*));
     for(; i < str_formed->n_i; i++) {
         int k = 0;
-        str_formed->s[i] = malloc(sizeof(char) * (SCREEN_COLUMNS + 1));
+        str_formed->s[i] = calloc((SCREEN_COLUMNS + 1), sizeof(char));
         for(k = 0; j < len_str && (k < SCREEN_COLUMNS +1); k++,j++) {
             if(str[j] == '\n') 
                 str[j] = ' ';
@@ -55,7 +32,8 @@ static void str_form(char *str, struct double_char *str_formed) {
 }
 
 void __free(struct double_char *d_str) {
-    for(int i = 0; i < d_str->n_i; i++) {
+    int i = 0;
+    for(; i < d_str->n_i; i++) {
         free(d_str->s[i]);
     }
     free(d_str->s);
@@ -94,11 +72,11 @@ void init_deck(struct deck *my_deck) {
         fseek(q_file, 0, SEEK_SET); // on se replace au début du fichier
 
         /* création et mise en mémoire du fichier de questions */
-        my_deck->questions = malloc(sizeof(char*) * my_deck->nb_lignes);
+        my_deck->questions = calloc(my_deck->nb_lignes, sizeof(char*));
 
         int i = 0;
         while(i < my_deck->nb_lignes) {
-            my_deck->questions[i] = malloc(sizeof(char) * MAX_QUESTION_LEN);
+            my_deck->questions[i] = calloc(MAX_QUESTION_LEN, sizeof(char));
             fgets(buffer, MAX_QUESTION_LEN, q_file);
             
             if(buffer[0] == '?') { // premier ? qu'on croise
@@ -153,7 +131,55 @@ void print_question(const struct board_t *board, struct deck m_deck, int flag) {
     struct double_char qst_formed;
     str_form(str, &qst_formed);
 
-    print_screen(board, qst_formed.s);
-    __free(&qst_formed);
+    char rep[4][MAX_QUESTION_LEN] = {{0}};
 
+    switch(flag) {
+        case 2: {
+            int i;
+            for(i = 1; i < 5; i++) { //on cherche d'abord la bonne réponse
+                if(m_deck.questions[num_q*5+i][0] == '*') {
+                    int j = 1;
+                    //on recopie la réponse sans récupérer le caractère * 
+                    for(; m_deck.questions[num_q*5+i][j] != '\0'; j++)
+                        rep[0][j-1] = m_deck.questions[num_q*5+i][j];
+
+                    rep[0][j-1] = '\0';
+                }
+            }
+
+            do { i = rand() %4; } // on en pioche ensuite une autre
+            while(m_deck.questions[num_q*5+i+1][0] == '*');
+
+            strcpy(rep[1], m_deck.questions[num_q*5+i+1]);
+        
+            break;
+        }
+
+        case 4:
+            for(int i = 1; i < 5; i++) {
+                if(m_deck.questions[num_q*5+i][0] == '*') {
+                    int j = 1;
+                    //on recopie la réponse sans récupérer le caractère * 
+                    for(; m_deck.questions[num_q*5+i][j] != '\0'; j++)
+                        rep[i-1][j-1] = m_deck.questions[num_q*5+i][j];
+                    rep[i-1][j-1] = '\0';
+                }
+                else strcpy(rep[i-1], m_deck.questions[num_q*5+i]);
+            }
+            break;
+
+        default:
+            break;
+
+    }
+
+    print_screen(board, qst_formed.s);
+    bd_send_line(board, 14, rep[0]);
+    bd_send_line(board, 15, rep[1]);
+    bd_send_line(board, 16, rep[2]);
+    bd_send_line(board, 17, rep[3]);
+
+    __free(&qst_formed);  
 }
+
+
