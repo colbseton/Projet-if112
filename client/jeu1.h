@@ -1,7 +1,10 @@
 #ifndef _JEU1_H
 #define _JEU1_H
 
-#define MAX_QUESTION_LEN 5000
+#define MAX_LEN 5000
+
+#define ENTREE 13 // pour '\n', 13 et pas 10 visiblement
+#define EFFACER 127 // pour effacer un caractère
 
 struct deck {
     int nb_qst;
@@ -31,4 +34,5 @@ void init_deck(struct deck *my_deck);
 /* on calcule le nombre de questions et on charge le fichier dans un 
    tableau de chaîne */
 
+void get_answer(const struct board_t *board, char *rep); // récupère la réponse au board
 #endif

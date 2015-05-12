@@ -2,6 +2,7 @@
 #include <stdlib.h> // perror/EXIT_SUCCESS/...
 #include <unistd.h> // Sleep
 #include <time.h> // time
+#include <ctype.h> // isdigit isalpha
 
 #include <board_client.h> // Pour les fonctions du simulateur
 #include "jeu1.h"
@@ -29,13 +30,15 @@ int main(int argc, char *argv[]) {
 
     srand(time(NULL));  //Générateur de nombres aléatoires
 
-    bd_send_button_states(&board, 0xff); // Allume tous les boutons
+    bd_send_button_states(&board, 0x00); // Allume aucun bouton
     clear_screen(&board);
     
     init_deck(&my_deck);
     while(1){
-        print_question(&board, my_deck, 2);
-        usleep(2000000);
+        char s[MAX_LEN];
+
+        print_question(&board, my_deck, 4);
+        get_answer(&board, s);
         clear_screen(&board);
     }
 

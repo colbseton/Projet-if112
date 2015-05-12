@@ -42,7 +42,7 @@ void __free(struct double_char *d_str) {
 
 void init_deck(struct deck *my_deck) {
     FILE *q_file = fopen("client/questions.txt", "r");
-    char buffer[MAX_QUESTION_LEN] = "";
+    char buffer[MAX_LEN] = "";
 
     my_deck->nb_lignes = 0;
     my_deck->nb_qst = 0;
@@ -52,13 +52,13 @@ void init_deck(struct deck *my_deck) {
         exit(EXIT_FAILURE);
     } 
     else {
-        while(fgets(buffer, MAX_QUESTION_LEN, q_file) != NULL) {
+        while(fgets(buffer, MAX_LEN, q_file) != NULL) {
             if(buffer[0] == '?') {
                 my_deck->nb_qst++;
                 my_deck->nb_lignes++;
     
             // on ne compte les ? suivants qui font partie de la même question
-                while(fgets(buffer, MAX_QUESTION_LEN, q_file) != NULL && buffer[0] == '?')
+                while(fgets(buffer, MAX_LEN, q_file) != NULL && buffer[0] == '?')
                     ;
 
                 if(buffer[0] != '?')
@@ -76,15 +76,15 @@ void init_deck(struct deck *my_deck) {
 
         int i = 0;
         while(i < my_deck->nb_lignes) {
-            my_deck->questions[i] = calloc(MAX_QUESTION_LEN, sizeof(char));
-            fgets(buffer, MAX_QUESTION_LEN, q_file);
+            my_deck->questions[i] = calloc(MAX_LEN, sizeof(char));
+            fgets(buffer, MAX_LEN, q_file);
             
             if(buffer[0] == '?') { // premier ? qu'on croise
-                char big_buffer[MAX_QUESTION_LEN] = "";
+                char big_buffer[MAX_LEN] = "";
                 strcpy(big_buffer, buffer);
 
                 /* concaténer ensemble les lignes de ? suivantes */
-                while(fgets(buffer, MAX_QUESTION_LEN, q_file) != NULL && buffer[0] == '?') {
+                while(fgets(buffer, MAX_LEN, q_file) != NULL && buffer[0] == '?') {
                     buffer[0] = ' '; // on efface les ? qui suivent (laissant que le premier)
                     strcat(big_buffer, buffer); 
                 } 
@@ -112,6 +112,31 @@ void print_screen(const struct board_t *board, char **text) {
     }
 }
 
+void get_answer(const struct board_t *board, char *rep) {
+    char k = '0';
+    char line[] = "                                                                                ";
+    int digit = 40, i = 0;
+
+    while (k != ENTREE) { //
+        bd_send_line(board, 9, "Reponse stp :"); // Affiche une invite
+        k = bd_read_key(board); // on lit une touche
+        //fprintf(stderr, "%d\n",k );
+        if (isalnum(k) || k == ' ') { 
+            line[44 + 8 - digit] = k; // et on rajoute un carac à l'affichage
+            rep[i] = k; // on le stock
+            digit --; i++;
+        }
+
+        else if(k == EFFACER) {
+            i--; digit++;
+            line[44 + 8 - digit] = ' ';
+            rep[i] = ' ';
+        }
+
+        bd_send_line(board, 11, line); // et on affiche les caractères
+        usleep(100);
+    }
+}
 
 void print_question(const struct board_t *board, struct deck m_deck, int flag) {
 
@@ -131,7 +156,7 @@ void print_question(const struct board_t *board, struct deck m_deck, int flag) {
     struct double_char qst_formed;
     str_form(str, &qst_formed);
 
-    char rep[4][MAX_QUESTION_LEN] = {{0}};
+    char rep[4][MAX_LEN] = {{0}};
 
     switch(flag) {
         case 2: {
