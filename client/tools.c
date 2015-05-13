@@ -14,6 +14,7 @@ static void str_form(char *str, struct double_char *str_formed) {
     
     str_formed->n_i = 1+len_str/SCREEN_COLUMNS;
     str_formed->s = calloc(SCREEN_LINES, sizeof(char*));
+
     for(; i < str_formed->n_i; i++) {
         int k = 0;
         str_formed->s[i] = calloc((SCREEN_COLUMNS + 1), sizeof(char));
@@ -25,6 +26,7 @@ static void str_form(char *str, struct double_char *str_formed) {
                 str[j] = '#'; 
             /* c'est le ? du début, les autres 
             ont été enlevés dans init_deck() */
+
             str_formed->s[i][k] = str[j];
         }
     }
@@ -113,13 +115,36 @@ void print_screen(const struct board_t *board, char **text) {
     }
 }
 
-void get_input(const struct board_t *board, char *str) {
+void countdown(const struct board_t *board) {
+    int i = 0;
+    char line[SCREEN_COLUMNS] = "                                                                                ";
+ 
+    for(; i <= 5; i++) {
+        line[44 + 8]  = '0' + 5 - i;
+        bd_send_line(board, 7, line);
+        usleep(1000000);
+    }
+    bd_send_line(board, 7, "                                                    Go !");  
+}
+
+
+void clear_screen(const struct board_t *board) {
+    for(int i = 0; i < SCREEN_LINES; i ++)
+        bd_send_line(board, i, "");
+}
+
+void get_input(const struct board_t *board, char *str, int nb_line) {
     char k = '0';
-    char line[] = "                                                                                ";
-    int digit = SCREEN_COLUMNS, i = 0;
+    char line[SCREEN_COLUMNS] = "                                                                                ";
+    int digit = 40, i = 0;
+
+    if(nb_line <= 0) {
+        fprintf(stderr, "get_input : nb_line doit etre > 0 !\n");
+        exit(EXIT_FAILURE);
+    }
 
     while (k != ENTREE) { //
-        bd_send_line(board, 9, "Reponse stp :"); // Affiche une invite
+        bd_send_line(board, nb_line-1, "Reponse stp :"); // Affiche une invite
         k = bd_read_key(board); // on lit une touche
 
         if (isalnum(k) || k == ' ' || k == '\'') { 
@@ -133,32 +158,25 @@ void get_input(const struct board_t *board, char *str) {
             line[44 + 8 - digit] = ' ';
             str[i] = ' ';
         }
-
-        bd_send_line(board, 11, line); // et on affiche les caractères
+        
+        bd_send_line(board, nb_line, line); // et on affiche les caractères
         usleep(100);
     }        
     str[++i] = '\0';
 }
 
 void print_question(const struct board_t *board, struct deck m_deck, int flag) {
-
     /* pour afficher les réponses :
-        ligne 14    -> réponse 1    <-> bouton 3
-        ligne 20    -> réponse 2    <-> bouton 4
-        ligne 14    -> réponse 3    <-> bouton 7
-        ligne 20    -> réponse 4    <-> bouton 8
-
-       S'il n'y a que deux réponses, on affichera à côté du bouton 2 et 3 
-       et c'est selon la valeur du flag
+       on affiche ligne par ligne, simplement
+       flag = 4 <-> carré, flag = 2 <-> duo, flag = 0 <-> cash 
     */
 
     int num_q = rand() % m_deck.nb_qst; // numéro de la question dans le fichier
-    char *str = m_deck.questions[num_q*5];
-
+    char *str = m_deck.questions[num_q*5]; // accéder à la question dans le deck
     struct double_char qst_formed;
-    str_form(str, &qst_formed);
-
     char rep[4][MAX_LEN] = {{0}};
+
+    str_form(str, &qst_formed); // on adapte la question au board
 
     switch(flag) {
         case 2: {
@@ -193,7 +211,6 @@ void print_question(const struct board_t *board, struct deck m_deck, int flag) {
                 else strcpy(rep[i-1], m_deck.questions[num_q*5+i]);
             }
             break;
-
         default:
             break;
     }

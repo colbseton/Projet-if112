@@ -5,18 +5,14 @@
 #include <ctype.h> // isdigit isalpha
 
 #include <board_client.h> // Pour les fonctions du simulateur
-#include "jeu1.h"
+#include "tools.h"
+#include "jeux.h"
 
 void exit_if(int cond, const char *msg) {
     if (cond) {
         perror(msg);
         exit(EXIT_FAILURE);
   }
-}
-
-void clear_screen(struct board_t *board) {
-    for(int i = 0; i < SCREEN_LINES; i ++)
-        bd_send_line(board, i, "");
 }
 
 
@@ -34,12 +30,9 @@ int main(int argc, char *argv[]) {
     clear_screen(&board);
     
     init_deck(&my_deck);
-    while(1){
-        char s[MAX_LEN];
 
-        print_question(&board, my_deck, 4);
-        get_answer(&board, s);
-        clear_screen(&board);
+    while(1){
+        menu(&board);
     }
 
     return EXIT_SUCCESS;
