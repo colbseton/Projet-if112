@@ -6,7 +6,7 @@ LDLIBS=-L$(BOARD_PATH) -lbd
 LD_FLAGS=-ggdb
 CPPFLAGS=-D_XOPEN_SOURCE=500
 # Completez par la liste de vos fichier objets (.o)
-OBJS= mainjeu.o jeu1.o
+OBJS= mainjeu.o tools.o jeux.o
 
 all: $(EXEC)
 $(EXEC): $(OBJS)
