@@ -31,9 +31,7 @@ int main(int argc, char *argv[]) {
     
     init_deck(&my_deck);
 
-    while(1){
-        menu(&board);
-    }
-
+    menu(&board);
+    sleep(10);
     return EXIT_SUCCESS;
 }

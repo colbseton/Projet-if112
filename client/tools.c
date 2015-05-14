@@ -6,7 +6,43 @@
 
 #include <board_client.h> // Pour les fonctions du simulateur
 #include "tools.h"
+#include "jeux.h"
 
+int levenshtein(char *s1, char *s2) {
+    unsigned int x, y, s1len, s2len;
+    s1len = strlen(s1);
+    s2len = strlen(s2);
+    unsigned int matrix[s2len+1][s1len+1];
+    matrix[0][0] = 0;
+    for (x = 1; x <= s2len; x++)
+        matrix[x][0] = matrix[x-1][0] + 1;
+    for (y = 1; y <= s1len; y++)
+        matrix[0][y] = matrix[0][y-1] + 1;
+    for (x = 1; x <= s2len; x++)
+        for (y = 1; y <= s1len; y++)
+            matrix[x][y] = MIN3(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
+ 
+    return(matrix[s2len][s1len]);
+}
+
+void sort(struct player p[], int nb_players) 
+{
+    int i = 0, unsorted = 1;
+    struct player tmp;
+    while (unsorted) {
+        unsorted = 0;
+        for (i = 0; i < nb_players-1; i++) {
+            if(p[i].score > p[i+1].score) {
+                /* Inversion des 2 éléments */
+                tmp = p[i+1];
+                p[i+1] = p[i];
+                p[i] = tmp;
+ 
+                unsorted = 1;
+            }
+        }
+    }
+}
 static void str_form(char *str, struct double_char *str_formed) {
     /* une question est un tableau de chaîne, chaque ligne est découpée 
        de façon à ne pas dépasser la longueur de l'écran */
@@ -18,6 +54,7 @@ static void str_form(char *str, struct double_char *str_formed) {
     for(; i < str_formed->n_i; i++) {
         int k = 0;
         str_formed->s[i] = calloc((SCREEN_COLUMNS + 1), sizeof(char));
+
         for(k = 0; j < len_str && (k < SCREEN_COLUMNS +1); k++,j++) {
             if(str[j] == '\n') 
                 str[j] = ' ';
@@ -32,6 +69,7 @@ static void str_form(char *str, struct double_char *str_formed) {
     }
     strcat(str_formed->s[i-1], "?"); // moche mais dur avec les indices 
 }
+
 
 void __free(struct double_char *d_str) {
     int i = 0;
@@ -115,16 +153,17 @@ void print_screen(const struct board_t *board, char **text) {
     }
 }
 
-void countdown(const struct board_t *board) {
+
+void countdown(const struct board_t *board, int line) {
     int i = 0;
-    char line[SCREEN_COLUMNS] = "                                                                                ";
+    char linebuff[SCREEN_COLUMNS] = "                                                                                ";
  
     for(; i <= 5; i++) {
-        line[44 + 8]  = '0' + 5 - i;
-        bd_send_line(board, 7, line);
+        linebuff[44 + 8]  = '0' + 5 - i;
+        bd_send_line(board, line, linebuff);
         usleep(1000000);
     }
-    bd_send_line(board, 7, "                                                    Go !");  
+    bd_send_line(board, line, "                                                    Go !");  
 }
 
 
@@ -132,6 +171,7 @@ void clear_screen(const struct board_t *board) {
     for(int i = 0; i < SCREEN_LINES; i ++)
         bd_send_line(board, i, "");
 }
+
 
 void get_input(const struct board_t *board, char *str, int nb_line) {
     char k = '0';
@@ -165,21 +205,14 @@ void get_input(const struct board_t *board, char *str, int nb_line) {
     str[++i] = '\0';
 }
 
-void print_question(const struct board_t *board, struct deck m_deck, int flag) {
-    /* pour afficher les réponses :
-       on affiche ligne par ligne, simplement
-       flag = 4 <-> carré, flag = 2 <-> duo, flag = 0 <-> cash 
-    */
 
-    int num_q = rand() % m_deck.nb_qst; // numéro de la question dans le fichier
-    char *str = m_deck.questions[num_q*5]; // accéder à la question dans le deck
-    struct double_char qst_formed;
-    char rep[4][MAX_LEN] = {{0}};
+void print_answer(const struct board_t *board, struct deck m_deck, int num_q, char **qst_formed) {
+    char rep[4][MAX_LEN] = {{0}}, c = 0;
+    bd_send_line(board, 5, "Duo (1), carre (2) ou cash (3) ?");
+    get_input(board, &c, 7);
 
-    str_form(str, &qst_formed); // on adapte la question au board
-
-    switch(flag) {
-        case 2: {
+    switch(c) {
+        case DUO: {
             int i;
             for(i = 1; i < 5; i++) { //on cherche d'abord la bonne réponse
                 if(m_deck.questions[num_q*5+i][0] == '*') {
@@ -199,7 +232,7 @@ void print_question(const struct board_t *board, struct deck m_deck, int flag) {
             break;
         }
 
-        case 4:
+        case CARRE:
             for(int i = 1; i < 5; i++) {
                 if(m_deck.questions[num_q*5+i][0] == '*') {
                     int j = 1;
@@ -215,11 +248,28 @@ void print_question(const struct board_t *board, struct deck m_deck, int flag) {
             break;
     }
 
-    print_screen(board, qst_formed.s);
+    clear_screen(board);
+
+    print_screen(board, qst_formed);
+
     bd_send_line(board, 14, rep[0]);
     bd_send_line(board, 15, rep[1]);
     bd_send_line(board, 16, rep[2]);
     bd_send_line(board, 17, rep[3]);
+}
+
+int print_question(const struct board_t *board, struct deck m_deck, int flag) {
+    int num_q = rand() % m_deck.nb_qst; // numéro de la question dans le fichier
+    char *str = m_deck.questions[num_q*5]; // accéder à la question dans le deck
+    struct double_char qst_formed;
+
+    str_form(str, &qst_formed); // on adapte la question au board
+
+    print_screen(board, qst_formed.s);
+
+    if(flag != -1) // -1, ne pas laisser le choix, c'est du cash (comme dans certains jeux)
+        print_answer(board, m_deck, num_q, qst_formed.s);
 
     __free(&qst_formed);  
+    return num_q;
 }
