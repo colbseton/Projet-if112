@@ -1,14 +1,12 @@
 #ifndef _TOOLS_H
 #define _TOOLS_H
 
-#define MAX_LEN 5000
+#define MAX_LEN     5000
+#define ENTREE      13 // pour '\n', 13 et pas 10 visiblement
+#define EFFACER     127 // pour effacer un caractère
+#define LIMIT       3 // tolérance pour les fautes d'orthographe
 
-#define ENTREE 13 // pour '\n', 13 et pas 10 visiblement
-#define EFFACER 127 // pour effacer un caractère
-
-#define DUO '1'
-#define CARRE '2'
-#define CASH '3'
+#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 
 #include "jeux.h"
 
@@ -27,20 +25,24 @@ void sort(struct player p[], int nb_players);
 
 void __free(struct double_char *d_str); // size est le nombre de lignes
 
+void sort_and_print(const struct board_t *board, struct game m_game);
+/* classe les joueurs et affiche le classement */
 
 void wait_for_quit(const struct board_t *board); 
 /* attendre l'appuie d'une touche pour quitter */
 
 
-int print_question(const struct board_t *board, struct deck m_deck, int flag);
+int print_question(const struct board_t *board, struct deck m_deck, int flag, char *c);
 /* sélectionne, met en forme et affiche la question
    si flag = -1 -> cash par défaut, retourne le numéro de la question */
 
+int levenshtein(char *s1, char *s2);
 
 void print_screen(const struct board_t *board, char **text);
 
-void print_answer(const struct board_t *board, struct deck m_deck, int num_q, char **qst_formed);
-
+void print_answer(const struct board_t *board, struct deck m_deck, int num_q, char **qst_formed, char *c);
+/* demande à l'utilisateur duo carré ou cash, affiche les réponses en fonction et 
+   retourne par effet de bord son choix */
 
 void clear_screen(const struct board_t *board);
 

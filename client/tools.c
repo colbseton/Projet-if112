@@ -9,11 +9,12 @@
 #include "jeux.h"
 
 int levenshtein(char *s1, char *s2) {
-    unsigned int x, y, s1len, s2len;
-    s1len = strlen(s1);
-    s2len = strlen(s2);
-    unsigned int matrix[s2len+1][s1len+1];
+    int x, y; 
+    int s1len = strlen(s1), s2len = strlen(s2);
+
+    int matrix[s2len+1][s1len+1];
     matrix[0][0] = 0;
+
     for (x = 1; x <= s2len; x++)
         matrix[x][0] = matrix[x-1][0] + 1;
     for (y = 1; y <= s1len; y++)
@@ -25,8 +26,7 @@ int levenshtein(char *s1, char *s2) {
     return(matrix[s2len][s1len]);
 }
 
-void sort(struct player p[], int nb_players) 
-{
+void sort(struct player p[], int nb_players) {
     int i = 0, unsorted = 1;
     struct player tmp;
     while (unsorted) {
@@ -43,6 +43,14 @@ void sort(struct player p[], int nb_players)
         }
     }
 }
+
+void sort_and_print(const struct board_t *board, struct game my_game) {
+    sort(my_game.players, my_game.nb_players);
+    bd_send_line(board, 1, "Classement :");
+    for(int k = 0; k < my_game.nb_players; k++)
+        bd_send_line(board, k+2, my_game.players[k].name);
+}
+
 static void str_form(char *str, struct double_char *str_formed) {
     /* une question est un tableau de chaîne, chaque ligne est découpée 
        de façon à ne pas dépasser la longueur de l'écran */
@@ -206,12 +214,12 @@ void get_input(const struct board_t *board, char *str, int nb_line) {
 }
 
 
-void print_answer(const struct board_t *board, struct deck m_deck, int num_q, char **qst_formed) {
-    char rep[4][MAX_LEN] = {{0}}, c = 0;
+void print_answer(const struct board_t *board, struct deck m_deck, int num_q, char **qst_formed, char *c) {
+    char rep[4][MAX_LEN] = {{0}};
     bd_send_line(board, 5, "Duo (1), carre (2) ou cash (3) ?");
-    get_input(board, &c, 7);
+    get_input(board, c, 7);
 
-    switch(c) {
+    switch(*c) {
         case DUO: {
             int i;
             for(i = 1; i < 5; i++) { //on cherche d'abord la bonne réponse
@@ -248,17 +256,14 @@ void print_answer(const struct board_t *board, struct deck m_deck, int num_q, ch
             break;
     }
 
-    clear_screen(board);
+    bd_send_line(board, 5, rep[0]);
+    bd_send_line(board, 6, rep[1]);
+    bd_send_line(board, 7, rep[2]);
+    bd_send_line(board, 8, rep[3]);
 
-    print_screen(board, qst_formed);
-
-    bd_send_line(board, 14, rep[0]);
-    bd_send_line(board, 15, rep[1]);
-    bd_send_line(board, 16, rep[2]);
-    bd_send_line(board, 17, rep[3]);
 }
 
-int print_question(const struct board_t *board, struct deck m_deck, int flag) {
+int print_question(const struct board_t *board, struct deck m_deck, int flag, char *c) {
     int num_q = rand() % m_deck.nb_qst; // numéro de la question dans le fichier
     char *str = m_deck.questions[num_q*5]; // accéder à la question dans le deck
     struct double_char qst_formed;
@@ -268,7 +273,7 @@ int print_question(const struct board_t *board, struct deck m_deck, int flag) {
     print_screen(board, qst_formed.s);
 
     if(flag != -1) // -1, ne pas laisser le choix, c'est du cash (comme dans certains jeux)
-        print_answer(board, m_deck, num_q, qst_formed.s);
+        print_answer(board, m_deck, num_q, qst_formed.s, c);
 
     __free(&qst_formed);  
     return num_q;

@@ -1,11 +1,12 @@
 #ifndef _JEUX_H
 #define _JEUX_H
 
-#define LIMIT 5
-#define NB_MAX_PLAYERS 5
-#define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
+#define NB_MAX_PLAYERS  5
+#define MAX_LEN         5000
 
-#define MAX_LEN 5000
+#define DUO             '1'
+#define CARRE           '2'
+#define CASH            '3'
 
 enum game_state { OVER, STARTED };
 
@@ -22,7 +23,9 @@ struct game {
 
 void menu(const struct board_t *board);
 
-int levenshtein(char *s1, char *s2);
+void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game);
+
+void jeu_max_de_questions(const struct board_t *board, struct game *m_game);
 
 void init_game(struct game *game, int nb_players);
 /* initialise la strucutre avec le nbr de joueurs, les scores à 0

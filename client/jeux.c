@@ -59,10 +59,64 @@ char *bbbuzzer[] = {
     NULL
 };
 
+void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* char *cinq_pour_tous[] */
+    char rep[SCREEN_COLUMNS] = "", buffer[SCREEN_COLUMNS]= "", c = 0;
+    clear_screen(board);
 
+    for(int i = 0; i < m_game->nb_players; i++) { // on fait jouer tous les joueurs
+        sprintf(buffer, "Allez c'est a toi %s", m_game->players[i].name);
+        clear_screen(board);
 
-void jeu_max_de_questions(const struct board_t *board, struct game *m_game) {
-    char rep[SCREEN_COLUMNS] = "", buffer[SCREEN_COLUMNS]= "";
+        if(i > 0) {
+            bd_send_line(board, 10, "NEXT PLAYER");
+            sleep(3);
+            clear_screen(board);
+        }
+        
+        bd_send_line(board, 0, buffer);
+        sleep(2);    
+
+        for(int a = 0; a < 4; a++) { // 5 questions chacun
+            int qst = print_question(board, my_deck, 0, &c);
+
+            int t = time(NULL);
+            get_input(board, rep, 15);
+
+            if(time(NULL) - t > 10) {
+                bd_send_line(board, 10, "TEMPS ECOULE");
+                sleep(2); 
+            }
+            else 
+            for(int j = 1; j < 5; j++) { // vérification
+                char *repv = my_deck.questions[qst*5+j];
+                if(repv[0] == '*') {
+                    repv++; // on "enleve" l'étoile
+                    if(levenshtein(rep, repv) <= LIMIT) {
+                        m_game->players[i].score += (c - '0'); // on actualise le score selon DUO CARRE OU CASH
+                        sprintf(buffer, "Correct ! score : %d", m_game->players[i].score);
+                        bd_send_line(board, 10, buffer);
+                    }
+
+                    else {
+                        sprintf(buffer, "FAUX ! score : %d", m_game->players[i].score);
+                        bd_send_line(board, 11, buffer);
+                    }
+                }
+            }
+            sleep(1);
+        }
+    }
+    clear_screen(board);
+    sort_and_print(board, *m_game);
+
+    bd_send_line(board, 10, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
+    get_input(board, &c, 12);
+
+    (c == 'y') ? jeu_max_de_questions(board, m_game) : menu(board);    
+}
+
+void jeu_max_de_questions(const struct board_t *board, struct game *m_game) { /* correspond à char *max_de_questions[] */
+    char rep[SCREEN_COLUMNS] = "", buffer[SCREEN_COLUMNS]= ""; 
     clear_screen(board);
 
     for(int i = 0; i < m_game->nb_players; i++) { // on fait jouer tous les joueurs
@@ -77,14 +131,15 @@ void jeu_max_de_questions(const struct board_t *board, struct game *m_game) {
         
         bd_send_line(board, 0, buffer);
         sleep(2);
+
     /* Mise en place du timer */
         int tdeb = time(NULL);
-        while(time(NULL) - tdeb <= 5) {
+        while(time(NULL) - tdeb <= 30) { // 30 secondes pour enchainer les questions
             int qst;
-            qst = print_question(board, my_deck, -1);
+            qst = print_question(board, my_deck, -1, NULL);
             get_input(board, rep, 3);
 
-            for(int j = 1; j < 5; j++) {
+            for(int j = 1; j < 5; j++) { // vérification
                 char *repv = my_deck.questions[qst*5+j];
                 if(repv[0] == '*') {
                     repv++; // on "enleve" l'étoile
@@ -106,7 +161,12 @@ void jeu_max_de_questions(const struct board_t *board, struct game *m_game) {
         sleep(2);
     }
     clear_screen(board);
-    bd_send_line(board, 0, "JEU TERMINE, a ciao bon dimanche !");
+    sort_and_print(board, *m_game);
+
+    bd_send_line(board, 10, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
+    char c = 0; get_input(board, &c, 12);
+
+    (c == 'y') ? jeu_max_de_questions(board, m_game) : menu(board);
 }
 
 void init_game(struct game *game, int nb_players) {
@@ -124,22 +184,17 @@ void menu(const struct board_t *board) {
     clear_screen(board);
     print_screen(board, accueil);
 
-    get_input(board, &game_choice, 20);
+    get_input(board, &game_choice, 10);
+    clear_screen(board);
     switch(game_choice) {
         case '1':
-            clear_screen(board);
             print_screen(board, cinq_pour_tous);
-            get_input(board, &nb_players, 20);
             break;
         case '2':
-            clear_screen(board);
             print_screen(board, max_de_questions);
-            get_input(board, &nb_players, 20);
             break;
         case '3':
-            clear_screen(board);
             print_screen(board, bbbuzzer);
-            get_input(board, &nb_players, 20);
             break;
         case 'q': // on quitte
             bd_disconnect(board);
@@ -149,6 +204,8 @@ void menu(const struct board_t *board) {
             usleep(500000);
             menu(board);
     }
+
+    get_input(board, &nb_players, 12);
 
     if(nb_players == 'b') 
         menu(board);
@@ -166,15 +223,17 @@ void menu(const struct board_t *board) {
         init_deck(&my_deck);
 
         clear_screen(board);
-        bd_send_line(board, 0, "                       Le jeu va commencer dans...");
+        bd_send_line(board, 0, "                      Le jeu va commencer dans...");
         countdown(board, 1);
 
+        if(game_choice == '1')
+            jeux_cinq_pour_tous(board, &my_game);
+
+        else if(game_choice == '2')
+            jeu_max_de_questions(board, &my_game);
+
+        else ;
         
-        jeu_max_de_questions(board, &my_game);
-        sort(my_game.players, my_game.nb_players);
-        bd_send_line(board, 1, "Classement :");
-        for(int k = 0; k < my_game.nb_players; k++)
-            bd_send_line(board, k+2, my_game.players[k].name);
     }
 }
 
