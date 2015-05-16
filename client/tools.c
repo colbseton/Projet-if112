@@ -32,7 +32,7 @@ void sort(struct player p[], int nb_players) {
     while (unsorted) {
         unsorted = 0;
         for (i = 0; i < nb_players-1; i++) {
-            if(p[i].score > p[i+1].score) {
+            if(p[i].score < p[i+1].score) {
                 /* Inversion des 2 éléments */
                 tmp = p[i+1];
                 p[i+1] = p[i];
@@ -45,10 +45,15 @@ void sort(struct player p[], int nb_players) {
 }
 
 void sort_and_print(const struct board_t *board, struct game my_game) {
+    char buffer[SCREEN_COLUMNS] = "";
+
     sort(my_game.players, my_game.nb_players);
     bd_send_line(board, 1, "Classement :");
-    for(int k = 0; k < my_game.nb_players; k++)
-        bd_send_line(board, k+2, my_game.players[k].name);
+
+    for(int k = 0; k < my_game.nb_players; k++) {
+        sprintf(buffer, "%s score : %d", my_game.players[k].name, my_game.players[k].score);
+        bd_send_line(board, k+2, buffer);
+    }
 }
 
 static void str_form(char *str, struct double_char *str_formed) {

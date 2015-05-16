@@ -79,10 +79,10 @@ void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* 
         for(int a = 0; a < 4; a++) { // 5 questions chacun
             int qst = print_question(board, my_deck, 0, &c);
 
-            int t = time(NULL);
+            int t = time(NULL); /* chrono déclenché */
             get_input(board, rep, 15);
 
-            if(time(NULL) - t > 10) {
+            if(time(NULL) - t > 10) { /* si ça a pris + de 10s */
                 bd_send_line(board, 10, "TEMPS ECOULE");
                 sleep(2); 
             }
@@ -109,10 +109,10 @@ void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* 
     clear_screen(board);
     sort_and_print(board, *m_game);
 
-    bd_send_line(board, 10, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
-    get_input(board, &c, 12);
+    bd_send_line(board, 15, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
+    get_input(board, &c, 17);
 
-    (c == 'y') ? jeu_max_de_questions(board, m_game) : menu(board);    
+    (c == 'y') ? jeux_cinq_pour_tous(board, m_game) : menu(board);    
 }
 
 void jeu_max_de_questions(const struct board_t *board, struct game *m_game) { /* correspond à char *max_de_questions[] */
@@ -163,8 +163,8 @@ void jeu_max_de_questions(const struct board_t *board, struct game *m_game) { /*
     clear_screen(board);
     sort_and_print(board, *m_game);
 
-    bd_send_line(board, 10, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
-    char c = 0; get_input(board, &c, 12);
+    bd_send_line(board, 15, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
+    char c = 0; get_input(board, &c, 17);
 
     (c == 'y') ? jeu_max_de_questions(board, m_game) : menu(board);
 }
