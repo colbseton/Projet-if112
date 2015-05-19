@@ -10,3 +10,8 @@ Pour exécuter le board et ensuite le client :
     Depuis projet-if112 : ./board/board &
                         Puis ./client/Jeu 
                         (Jeu est le nom de l'exécutable créé le make)
+
+!ATTENTION POUR LINUX!
+	la touche de backspace n'est pas prise en compte
+	(problème de compatibilité…)
+	-- Dans ce cas -- : dans tools.h, replacer la valeur du #define EFFACER par la touche de votre choix
