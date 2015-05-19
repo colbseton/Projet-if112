@@ -38,7 +38,7 @@ char *cinq_pour_tous[] = {
 
 char *max_de_questions[] = {
     "Les regles sont simples :",
-    "Chaque joueur dispose de 2 minutes pour repondre a un max",
+    "Chaque joueur dispose de 30 secondes pour repondre a un max",
     "de questions la suite.",
     "1 point par bonne reponse, le compteur retombe a 0 si une reponse est fausse",
     "","",
@@ -48,19 +48,91 @@ char *max_de_questions[] = {
 };
 
 char *bbbuzzer[] = {
-    "Les regles sont simples :"
-    "Des questions sont posees a TOUS les joueurs en meme temps",
-    "Le joueur ayant buzzer dispose de 7 secondes pour repondre",
+    "Les regles sont simples :",
+    "11 questions sont posees a TOUS les joueurs en meme temps",
     "S'il a raison, il marque 1 point, 0 sinon",
-    "Si aucun joueur n'a buzze pendant 10 secondes, on passe a la question suivante",
+    "Pour buzzer, ne pas oublier d'appuyer sur votre buzzer ET la touche entree",
     "","",
     "Capiche ? Combien de joueurs alors ? (touche b + entree pour revenir)", 
     "(1 seul caractere s'il vous plait)", 
     NULL
 };
 
-void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* char *cinq_pour_tous[] */
-    char rep[SCREEN_COLUMNS] = "", buffer[SCREEN_COLUMNS]= "", c = 0;
+/* retourne l'indice dans la chaîne du caractère si trouvé, -1 sinon */
+static int is_in(char *s, char ch) {
+    char *s2 = s;
+    for(; *s; s++)
+        if(ch == *s)
+            return (s - s2);
+
+    return -1; 
+}
+
+
+void jeu_buzzer(const struct board_t *board, struct game *m_game) {
+    clear_screen(board);
+    char rep[SCREEN_COLUMNS] = "", buffer[SCREEN_COLUMNS]= "", c;
+    char *buzzers = calloc(m_game->nb_players, sizeof(char));
+
+    /* associer les buzzers aux joueurs */
+    for(int i = 0; i < m_game->nb_players; i++) {
+        bd_send_line(board, 0, m_game->players[i].name);        
+        bd_send_line(board, 1, "Choix buzzer :");
+        get_input(board, &buzzers[i], 3);
+    }
+
+    for(int i = 0; i < 11; i++) { // 11 questions à jouer
+        c = 0;
+        int qst;
+        qst = print_question(board, my_deck, -1, NULL);
+        bd_send_line(board, 5, "Qui buzze ?!");
+        get_input(board, &c, 7);
+
+        int k;
+        while((k = is_in(buzzers, c)) == -1) { // tant que ce qui est buzzé n'existe pas
+            bd_send_line(board, 8, "Buzzer inconnu !");
+            sleep(1);
+            bd_send_line(board, 8, "");
+            get_input(board, &c, 7);
+        }
+
+        sprintf(buffer, "OK tente ta chance %s", m_game->players[k].name);
+        bd_send_line(board, 8, buffer);
+
+        get_input(board, rep, 10);
+
+        for(int j = 1; j < 5; j++) { // vérification
+            char *repv = my_deck.questions[qst*5+j];
+            if(repv[0] == '*') {
+                repv++; // on "enleve" l'étoile
+                if(levenshtein(rep, repv) <= LIMIT) {
+                    m_game->players[k].score++;
+                    sprintf(buffer, "Correct ! score : %d", m_game->players[k].score);
+                    bd_send_line(board, 10, buffer);
+                    usleep(500000);
+                }
+              
+                else {
+                    sprintf(buffer, "FAUX ! score : %d", m_game->players[k].score);
+                    bd_send_line(board, 11, buffer);
+                    usleep(500000);
+                }
+            }
+        }
+    }  
+
+    clear_screen(board);
+    sort_and_print(board, *m_game);
+
+    bd_send_line(board, 15, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
+    get_input(board, &c, 17);
+
+    (c == 'y') ? jeu_cinq_pour_tous(board, m_game) : menu(board);           
+}
+
+
+void jeu_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* char *cinq_pour_tous[] */
+    char rep[SCREEN_COLUMNS] = "", buffer[SCREEN_COLUMNS]= "", c;
     clear_screen(board);
 
     for(int i = 0; i < m_game->nb_players; i++) { // on fait jouer tous les joueurs
@@ -76,7 +148,8 @@ void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* 
         bd_send_line(board, 0, buffer);
         sleep(2);    
 
-        for(int a = 0; a < 4; a++) { // 5 questions chacun
+        for(int a = 0; a < 5; a++) { // 5 questions chacun
+            c = 0;
             int qst = print_question(board, my_deck, 0, &c);
 
             int t = time(NULL); /* chrono déclenché */
@@ -95,11 +168,13 @@ void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* 
                         m_game->players[i].score += (c - '0'); // on actualise le score selon DUO CARRE OU CASH
                         sprintf(buffer, "Correct ! score : %d", m_game->players[i].score);
                         bd_send_line(board, 10, buffer);
+                        usleep(500000);
                     }
 
                     else {
                         sprintf(buffer, "FAUX ! score : %d", m_game->players[i].score);
                         bd_send_line(board, 11, buffer);
+                        usleep(500000);
                     }
                 }
             }
@@ -112,7 +187,7 @@ void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game) { /* 
     bd_send_line(board, 15, "JEU TERMINE, Voulez-vous rejouer ? y pour rejouer, autre pour revenir au menu");
     get_input(board, &c, 17);
 
-    (c == 'y') ? jeux_cinq_pour_tous(board, m_game) : menu(board);    
+    (c == 'y') ? jeu_cinq_pour_tous(board, m_game) : menu(board);    
 }
 
 void jeu_max_de_questions(const struct board_t *board, struct game *m_game) { /* correspond à char *max_de_questions[] */
@@ -147,12 +222,14 @@ void jeu_max_de_questions(const struct board_t *board, struct game *m_game) { /*
                         m_game->players[i].score++;
                         sprintf(buffer, "Correct ! score : %d", m_game->players[i].score);
                         bd_send_line(board, 10, buffer);
+                        usleep(500000);
                     }
 
                     else {
                         m_game->players[i].score = 0; 
                         sprintf(buffer, "FAUX ! score : %d", m_game->players[i].score);
                         bd_send_line(board, 11, buffer);
+                        usleep(500000);
                     }
                 }
             }
@@ -227,13 +304,13 @@ void menu(const struct board_t *board) {
         countdown(board, 1);
 
         if(game_choice == '1')
-            jeux_cinq_pour_tous(board, &my_game);
+            jeu_cinq_pour_tous(board, &my_game);
 
         else if(game_choice == '2')
             jeu_max_de_questions(board, &my_game);
 
-        else ;
+        else 
+            jeu_buzzer(board, &my_game);
         
     }
 }
-

@@ -31,7 +31,7 @@ void sort(struct player p[], int nb_players) {
     struct player tmp;
     while (unsorted) {
         unsorted = 0;
-        for (i = 0; i < nb_players-1; i++) {
+        for (i = 0; i < (nb_players-1); i++) {
             if(p[i].score < p[i+1].score) {
                 /* Inversion des 2 éléments */
                 tmp = p[i+1];
@@ -63,12 +63,14 @@ static void str_form(char *str, struct double_char *str_formed) {
     
     str_formed->n_i = 1+len_str/SCREEN_COLUMNS;
     str_formed->s = calloc(SCREEN_LINES, sizeof(char*));
+    /* normalement n_i < SCREEN_LINES, on alloue pas pareil
+       à cause de print_screen (condition de la boucle fort) */
 
     for(; i < str_formed->n_i; i++) {
         int k = 0;
-        str_formed->s[i] = calloc((SCREEN_COLUMNS + 1), sizeof(char));
+        str_formed->s[i] = calloc(SCREEN_COLUMNS, sizeof(char));
 
-        for(k = 0; j < len_str && (k < SCREEN_COLUMNS +1); k++,j++) {
+        for(k = 0; j < len_str && (k < SCREEN_COLUMNS); k++,j++) {
             if(str[j] == '\n') 
                 str[j] = ' ';
           
@@ -80,7 +82,7 @@ static void str_form(char *str, struct double_char *str_formed) {
             str_formed->s[i][k] = str[j];
         }
     }
-    strcat(str_formed->s[i-1], "?"); // moche mais dur avec les indices 
+    strcat(str_formed->s[i-1], "?"); // rajoute un ? à la fin, moche mais dur avec les indices 
 }
 
 
@@ -115,7 +117,7 @@ void init_deck(struct deck *my_deck) {
                     ;
 
                 if(buffer[0] != '?')
-                    // pour ne pas sauter la ligne qu'on vient de lire
+                    // pour ne pas sauter la ligne qu'on vient de lire et qui n'est pas une question
                     fseek(q_file, -strlen(buffer)* sizeof(char), SEEK_CUR); 
             }
 
@@ -143,14 +145,14 @@ void init_deck(struct deck *my_deck) {
                     strcat(big_buffer, buffer); 
                 } 
                 if(buffer[0] != '?')
-                    // pour ne pas sauter la ligne qu'on vient de lire
+                    // pour ne pas sauter la ligne qu'on vient de lire et qui n'est pas une question
                     fseek(q_file, -strlen(buffer)* sizeof(char), SEEK_CUR); 
 
-                strcpy(my_deck->questions[i++], big_buffer);
+                strcpy(my_deck->questions[i++], big_buffer); // copie dans le deck, puis incrémentation i
             }
 
             else if(isalnum(buffer[0]) || buffer[0] == '*') 
-                strcpy(my_deck->questions[i++], buffer);            
+                strcpy(my_deck->questions[i++], buffer); // copie dans le deck, puis incrémentation i      
         }
         fclose(q_file);
     }
@@ -197,7 +199,7 @@ void get_input(const struct board_t *board, char *str, int nb_line) {
     }
 
     while (k != ENTREE) { //
-        bd_send_line(board, nb_line-1, "Reponse stp :"); // Affiche une invite
+        bd_send_line(board, nb_line-1, "Votre reponse :"); // Affiche une invite
         k = bd_read_key(board); // on lit une touche
 
         if (isalnum(k) || k == ' ' || k == '\'') { 
@@ -215,7 +217,7 @@ void get_input(const struct board_t *board, char *str, int nb_line) {
         bd_send_line(board, nb_line, line); // et on affiche les caractères
         usleep(100);
     }        
-    str[++i] = '\0';
+    str[++i] = '\0'; // incrémente puis affecte le caractère de fin de chaîne
 }
 
 

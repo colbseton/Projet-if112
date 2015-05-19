@@ -28,9 +28,6 @@ void __free(struct double_char *d_str); // size est le nombre de lignes
 void sort_and_print(const struct board_t *board, struct game m_game);
 /* classe les joueurs et affiche le classement */
 
-void wait_for_quit(const struct board_t *board); 
-/* attendre l'appuie d'une touche pour quitter */
-
 
 int print_question(const struct board_t *board, struct deck m_deck, int flag, char *c);
 /* sélectionne, met en forme et affiche la question

@@ -23,7 +23,9 @@ struct game {
 
 void menu(const struct board_t *board);
 
-void jeux_cinq_pour_tous(const struct board_t *board, struct game *m_game);
+void jeu_buzzer(const struct board_t *board, struct game *m_game);
+
+void jeu_cinq_pour_tous(const struct board_t *board, struct game *m_game);
 
 void jeu_max_de_questions(const struct board_t *board, struct game *m_game);
 
